@@ -2,6 +2,13 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 export async function GET() {
+  // During build time, return mock data to prevent build failures
+  if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+    return NextResponse.json({
+      categories: []
+    })
+  }
+
   try {
     // Check if we can connect to the database
     await prisma.$connect()

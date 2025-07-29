@@ -5,6 +5,14 @@ export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  // During build time, return error to prevent build failures
+  if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+    return NextResponse.json(
+      { error: 'Database not available' },
+      { status: 503 }
+    )
+  }
+
   try {
     // Check if we can connect to the database
     await prisma.$connect()
@@ -71,6 +79,14 @@ export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  // During build time, return error to prevent build failures
+  if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+    return NextResponse.json(
+      { error: 'Database not available' },
+      { status: 503 }
+    )
+  }
+
   try {
     // Check if we can connect to the database
     await prisma.$connect()
