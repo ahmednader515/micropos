@@ -7,6 +7,9 @@ export async function GET() {
 
 export async function POST() {
   try {
+    // Check if we can connect to the database
+    await prisma.$connect()
+    
     // Create sample categories
     const electronicsCategory = await prisma.category.upsert({
       where: { name: 'Electronics' },
@@ -135,9 +138,25 @@ export async function POST() {
 
   } catch (error) {
     console.error('Error seeding database:', error)
+    
+    // Return success message if database is not available (during build)
+    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+      return NextResponse.json({
+        message: 'Database seeding skipped (no database connection)',
+        data: {
+          categories: [],
+          products: [],
+          customers: [],
+          suppliers: []
+        }
+      })
+    }
+    
     return NextResponse.json(
       { error: 'Failed to seed database' },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 } 

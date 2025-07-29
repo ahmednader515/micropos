@@ -3,6 +3,9 @@ import { prisma } from '@/lib/prisma'
 
 export async function GET() {
   try {
+    // Check if we can connect to the database
+    await prisma.$connect()
+    
     const products = await prisma.product.findMany({
       where: {
         isActive: true
@@ -30,15 +33,28 @@ export async function GET() {
 
   } catch (error) {
     console.error('Error fetching products:', error)
+    
+    // Return empty array if database is not available (during build)
+    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+      return NextResponse.json({
+        products: []
+      })
+    }
+    
     return NextResponse.json(
       { error: 'Failed to fetch products' },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 }
 
 export async function POST(request: Request) {
   try {
+    // Check if we can connect to the database
+    await prisma.$connect()
+    
     const body = await request.json()
     const { name, description, price, costPrice, stock, minStock, barcode, sku, categoryId } = body
 
@@ -96,9 +112,20 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('Error creating product:', error)
+    
+    // Return error if database is not available (during build)
+    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+      return NextResponse.json(
+        { error: 'Database not available' },
+        { status: 503 }
+      )
+    }
+    
     return NextResponse.json(
       { error: 'Failed to create product' },
       { status: 500 }
     )
+  } finally {
+    await prisma.$disconnect()
   }
 } 
