@@ -1,6 +1,23 @@
 {
+  "/_not-found": "app/_not-found.js",
+  "/api/products/[id]/route": "app/api/products/[id]/route.js",
+  "/api/categories/route": "app/api/categories/route.js",
+  "/api/products/inventory/route": "app/api/products/inventory/route.js",
+  "/api/products/reports/route": "app/api/products/reports/route.js",
+  "/api/products/route": "app/api/products/route.js",
+  "/api/seed/route": "app/api/seed/route.js",
+  "/api/products/sales/route": "app/api/products/sales/route.js",
+  "/cashbox/page": "app/cashbox/page.js",
+  "/expenses/page": "app/expenses/page.js",
+  "/customers/page": "app/customers/page.js",
+  "/inquiries/page": "app/inquiries/page.js",
   "/inventory/new-product/page": "app/inventory/new-product/page.js",
   "/inventory/page": "app/inventory/page.js",
+  "/page": "app/page.js",
+  "/purchases/page": "app/purchases/page.js",
   "/inventory/products/page": "app/inventory/products/page.js",
-  "/api/products/inventory/route": "app/api/products/inventory/route.js"
+  "/reports/page": "app/reports/page.js",
+  "/sales/page": "app/sales/page.js",
+  "/settings/page": "app/settings/page.js",
+  "/suppliers/page": "app/suppliers/page.js"
 }
