@@ -3,7 +3,7 @@ export const stopAllCameraStreams = () => {
   console.log("Stopping all camera streams...");
   
   // Get all media streams from the page
-  const streams = [];
+  const streams: MediaStream[] = [];
   
   // Get streams from video elements
   const videoElements = document.querySelectorAll('video');
