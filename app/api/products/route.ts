@@ -1,73 +1,53 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { safeDatabaseOperation, buildTimeResponses, isBuildTime } from '@/lib/api-helpers'
 
 export async function GET() {
-  // During build time, return mock data to prevent build failures
-  if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
-    return NextResponse.json({
-      products: []
-    })
-  }
-
-  try {
-    // Check if we can connect to the database
-    await prisma.$connect()
-    
-    const products = await prisma.product.findMany({
-      where: {
-        isActive: true
-      },
-      include: {
-        category: {
-          select: {
-            id: true,
-            name: true
+  return safeDatabaseOperation(
+    async () => {
+      await prisma.$connect()
+      
+      const products = await prisma.product.findMany({
+        where: {
+          isActive: true
+        },
+        include: {
+          category: {
+            select: {
+              id: true,
+              name: true
+            }
           }
+        },
+        orderBy: {
+          createdAt: 'desc'
         }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      }
-    })
-
-    return NextResponse.json({
-      products: products.map(product => ({
-        ...product,
-        price: Number(product.price),
-        costPrice: Number(product.costPrice)
-      }))
-    })
-
-  } catch (error) {
-    console.error('Error fetching products:', error)
-    
-    // Return empty array if database is not available (during build)
-    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
-      return NextResponse.json({
-        products: []
       })
-    }
-    
-    return NextResponse.json(
-      { error: 'Failed to fetch products' },
-      { status: 500 }
-    )
-  } finally {
-    await prisma.$disconnect()
-  }
+
+      await prisma.$disconnect()
+
+      return {
+        products: products.map(product => ({
+          ...product,
+          price: Number(product.price),
+          costPrice: Number(product.costPrice)
+        }))
+      }
+    },
+    buildTimeResponses.products,
+    'Failed to fetch products'
+  )
 }
 
 export async function POST(request: Request) {
-  // During build time, return error to prevent build failures
-  if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+  if (isBuildTime()) {
     return NextResponse.json(
-      { error: 'Database not available' },
+      buildTimeResponses.error,
       { status: 503 }
     )
   }
 
   try {
-    // Check if we can connect to the database
     await prisma.$connect()
     
     const body = await request.json()
@@ -116,6 +96,8 @@ export async function POST(request: Request) {
       }
     })
 
+    await prisma.$disconnect()
+
     return NextResponse.json({
       message: 'Product created successfully',
       product: {
@@ -128,10 +110,9 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error creating product:', error)
     
-    // Return error if database is not available (during build)
-    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+    if (isBuildTime()) {
       return NextResponse.json(
-        { error: 'Database not available' },
+        buildTimeResponses.error,
         { status: 503 }
       )
     }
@@ -140,7 +121,5 @@ export async function POST(request: Request) {
       { error: 'Failed to create product' },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 } 

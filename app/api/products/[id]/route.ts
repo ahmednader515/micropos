@@ -1,20 +1,19 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { isBuildTime, buildTimeResponses } from '@/lib/api-helpers'
 
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  // During build time, return error to prevent build failures
-  if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+  if (isBuildTime()) {
     return NextResponse.json(
-      { error: 'Database not available' },
+      buildTimeResponses.error,
       { status: 503 }
     )
   }
 
   try {
-    // Check if we can connect to the database
     await prisma.$connect()
     
     const { id } = params
@@ -46,6 +45,8 @@ export async function PATCH(
       }
     })
 
+    await prisma.$disconnect()
+
     return NextResponse.json({
       message: 'Product updated successfully',
       product: {
@@ -58,10 +59,9 @@ export async function PATCH(
   } catch (error) {
     console.error('Error updating product:', error)
     
-    // Return error if database is not available (during build)
-    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+    if (isBuildTime()) {
       return NextResponse.json(
-        { error: 'Database not available' },
+        buildTimeResponses.error,
         { status: 503 }
       )
     }
@@ -70,8 +70,6 @@ export async function PATCH(
       { error: 'Failed to update product' },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }
 
@@ -79,16 +77,14 @@ export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  // During build time, return error to prevent build failures
-  if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+  if (isBuildTime()) {
     return NextResponse.json(
-      { error: 'Database not available' },
+      buildTimeResponses.error,
       { status: 503 }
     )
   }
 
   try {
-    // Check if we can connect to the database
     await prisma.$connect()
     
     const { id } = params
@@ -111,6 +107,8 @@ export async function DELETE(
       data: { isActive: false }
     })
 
+    await prisma.$disconnect()
+
     return NextResponse.json({
       message: 'Product deleted successfully'
     })
@@ -118,10 +116,9 @@ export async function DELETE(
   } catch (error) {
     console.error('Error deleting product:', error)
     
-    // Return error if database is not available (during build)
-    if (process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL) {
+    if (isBuildTime()) {
       return NextResponse.json(
-        { error: 'Database not available' },
+        buildTimeResponses.error,
         { status: 503 }
       )
     }
@@ -130,7 +127,5 @@ export async function DELETE(
       { error: 'Failed to delete product' },
       { status: 500 }
     )
-  } finally {
-    await prisma.$disconnect()
   }
 } 
