@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import MainLayout from '@/components/MainLayout'
 import FlashNotification from '@/components/FlashNotification'
+import BarcodeSearch from '@/components/BarcodeSearch'
 
 interface Product {
   id: string
@@ -194,6 +195,11 @@ export default function InventoryProductsPage() {
     }
   }
 
+  const handleBarcodeSearch = (barcode: string) => {
+    setSearchTerm(barcode);
+    showNotification(`تم البحث عن الباركود: ${barcode}`, 'info');
+  }
+
 
 
   return (
@@ -216,18 +222,30 @@ export default function InventoryProductsPage() {
 
         {/* Search Filter */}
         <div className="bg-white rounded-lg p-4 shadow-sm" dir="rtl">
-          <div className="flex items-center space-x-2 space-x-reverse">
-            <div className="flex-1">
-              <input
-                type="text"
-                id="search"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="بحث بالاسم"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+          <div className="space-y-4">
+            {/* Regular search */}
+            <div className="flex items-center space-x-2 space-x-reverse">
+              <div className="flex-1">
+                <input
+                  type="text"
+                  id="search"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="بحث بالاسم أو الباركود أو SKU"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
+                />
+              </div>
+            </div>
+            
+            {/* Barcode scanner search */}
+            <div className="border-t pt-4">
+              <p className="text-sm text-gray-600 mb-2">أو استخدم ماسح الباركود:</p>
+              <BarcodeSearch
+                onBarcodeSearch={handleBarcodeSearch}
+                placeholder="ادخل الباركود يدوياً أو اضغط على أيقونة الماسح"
+                className="rtl"
               />
             </div>
-
           </div>
         </div>
 

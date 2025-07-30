@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import MainLayout from '@/components/MainLayout'
+import BarcodeSearch from '@/components/BarcodeSearch'
 
 interface Category {
   id: string
@@ -101,6 +102,13 @@ export default function NewProductPage() {
     setFormData(prev => ({
       ...prev,
       [name]: value
+    }))
+  }
+
+  const handleBarcodeDetected = (barcode: string) => {
+    setFormData(prev => ({
+      ...prev,
+      barcode: barcode
     }))
   }
 
@@ -275,14 +283,12 @@ export default function NewProductPage() {
                 <label htmlFor="barcode" className="block text-sm font-medium text-gray-700 mb-2">
                   الباركود
                 </label>
-                <input
-                  type="text"
-                  id="barcode"
-                  name="barcode"
+                <BarcodeSearch
+                  onBarcodeSearch={handleBarcodeDetected}
                   value={formData.barcode}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="باركود المنتج"
+                  onChange={(value) => setFormData(prev => ({ ...prev, barcode: value }))}
+                  placeholder="ادخل الباركود يدوياً أو اضغط على أيقونة الماسح"
+                  className="w-full"
                 />
               </div>
 

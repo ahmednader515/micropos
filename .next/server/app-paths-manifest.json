@@ -1,7 +1,0 @@
-{
-  "/inventory/page": "app/inventory/page.js",
-  "/inventory/new-product/page": "app/inventory/new-product/page.js",
-  "/api/categories/route": "app/api/categories/route.js",
-  "/inventory/barcode-scanner/simple/page": "app/inventory/barcode-scanner/simple/page.js",
-  "/inventory/barcode-scanner/page": "app/inventory/barcode-scanner/page.js"
-}
