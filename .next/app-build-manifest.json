@@ -30,6 +30,11 @@
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/inventory/barcode-scanner/simple/page.js"
+    ],
+    "/inventory/barcode-scanner/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/inventory/barcode-scanner/page.js"
     ]
   }
 }
