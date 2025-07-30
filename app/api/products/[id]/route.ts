@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { isBuildTime, buildTimeResponses } from '@/lib/api-helpers'
 
+// Force dynamic rendering - disable static generation
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function PATCH(
   request: Request,
   { params }: { params: { id: string } }
