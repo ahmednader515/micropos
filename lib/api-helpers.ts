@@ -5,6 +5,11 @@ export function isBuildTime(): boolean {
   return process.env.NODE_ENV === 'production' && !process.env.DATABASE_URL
 }
 
+// Helper function to check if we're in Vercel build environment
+export function isVercelBuild(): boolean {
+  return process.env.VERCEL === '1' || process.env.NODE_ENV === 'production'
+}
+
 // Helper function to return build-time safe responses
 export function buildTimeResponse(data: any, status: number = 200) {
   return NextResponse.json(data, { status })
@@ -16,7 +21,8 @@ export async function safeDatabaseOperation<T>(
   fallbackData: T,
   errorMessage: string = 'Database operation failed'
 ): Promise<NextResponse> {
-  if (isBuildTime()) {
+  // If we're in build time or Vercel build, return fallback immediately
+  if (isBuildTime() || isVercelBuild()) {
     return buildTimeResponse(fallbackData)
   }
 
@@ -27,7 +33,7 @@ export async function safeDatabaseOperation<T>(
     console.error(errorMessage, error)
     
     // If we're in build time or database is unavailable, return fallback
-    if (isBuildTime()) {
+    if (isBuildTime() || isVercelBuild()) {
       return buildTimeResponse(fallbackData)
     }
     

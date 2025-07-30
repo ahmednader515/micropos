@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { safeDatabaseOperation, buildTimeResponses } from '@/lib/api-helpers'
+import { safeDatabaseOperation, buildTimeResponses, isVercelBuild } from '@/lib/api-helpers'
 
 // Force dynamic rendering - disable static generation
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export async function GET() {
+  // Immediate return for Vercel builds
+  if (isVercelBuild()) {
+    return NextResponse.json(buildTimeResponses.categories)
+  }
+
   return safeDatabaseOperation(
     async () => {
       await prisma.$connect()

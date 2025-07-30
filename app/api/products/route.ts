@@ -1,12 +1,17 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { safeDatabaseOperation, buildTimeResponses, isBuildTime } from '@/lib/api-helpers'
+import { safeDatabaseOperation, buildTimeResponses, isBuildTime, isVercelBuild } from '@/lib/api-helpers'
 
 // Force dynamic rendering - disable static generation
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export async function GET() {
+  // Immediate return for Vercel builds
+  if (isVercelBuild()) {
+    return NextResponse.json(buildTimeResponses.products)
+  }
+
   return safeDatabaseOperation(
     async () => {
       await prisma.$connect()
@@ -44,7 +49,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (isBuildTime()) {
+  if (isBuildTime() || isVercelBuild()) {
     return NextResponse.json(
       buildTimeResponses.error,
       { status: 503 }
@@ -114,7 +119,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error('Error creating product:', error)
     
-    if (isBuildTime()) {
+    if (isBuildTime() || isVercelBuild()) {
       return NextResponse.json(
         buildTimeResponses.error,
         { status: 503 }

@@ -10,5 +10,10 @@
   "installCommand": "npm install",
   "env": {
     "NODE_ENV": "production"
+  },
+  "build": {
+    "env": {
+      "PRISMA_GENERATE_DATAPROXY": "true"
+    }
   }
 } 
