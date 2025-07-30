@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import MainLayout from '@/components/MainLayout'
 import FlashNotification from '@/components/FlashNotification'
-import BarcodeSearch from '@/components/BarcodeSearch'
+import BarcodeInput from '@/components/BarcodeInput'
 
 interface Product {
   id: string
@@ -222,31 +222,13 @@ export default function InventoryProductsPage() {
 
         {/* Search Filter */}
         <div className="bg-white rounded-lg p-4 shadow-sm" dir="rtl">
-          <div className="space-y-4">
-            {/* Regular search */}
-            <div className="flex items-center space-x-2 space-x-reverse">
-              <div className="flex-1">
-                <input
-                  type="text"
-                  id="search"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  placeholder="بحث بالاسم أو الباركود أو SKU"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900 bg-white"
-                />
-              </div>
-            </div>
-            
-            {/* Barcode scanner search */}
-            <div className="border-t pt-4">
-              <p className="text-sm text-gray-600 mb-2">أو استخدم ماسح الباركود:</p>
-              <BarcodeSearch
-                onBarcodeSearch={handleBarcodeSearch}
-                placeholder="ادخل الباركود يدوياً أو اضغط على أيقونة الماسح"
-                className="rtl"
-              />
-            </div>
-          </div>
+          <BarcodeInput
+            value={searchTerm}
+            onChange={setSearchTerm}
+            onBarcodeDetected={handleBarcodeSearch}
+            placeholder="بحث بالاسم أو الباركود أو SKU"
+            className="rtl"
+          />
         </div>
 
         {loading ? (

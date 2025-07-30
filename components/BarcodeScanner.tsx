@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { BrowserMultiFormatReader } from "@zxing/browser";
 import { Result } from "@zxing/library";
+import { stopAllCameraStreams, stopVideoStream } from "@/utils/cameraUtils";
 
 // Aspect ratio and crop size factor
 const DESIRED_CROP_ASPECT_RATIO = 3 / 2;
@@ -27,66 +28,97 @@ export default function BarcodeScanner({
   const [error, setError] = useState<string | null>(null);
   const [barcodeResult, setBarcodeResult] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
-    const codeReader = useRef(new BrowserMultiFormatReader());
-
-  // Cleanup effect that runs when component unmounts or isOpen becomes false
+  const codeReader = useRef(new BrowserMultiFormatReader());
+  
+  // Store callbacks in refs to prevent unnecessary re-renders
+  const onBarcodeDetectedRef = useRef(onBarcodeDetected);
+  const onErrorRef = useRef(onError);
+  const onCloseRef = useRef(onClose);
+  
+  // Track camera state to prevent multiple initializations
+  const cameraInitializedRef = useRef(false);
+  const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
+  const currentStreamRef = useRef<MediaStream | null>(null);
+  const isCleaningUpRef = useRef(false);
+  
+  // Update refs when callbacks change
   useEffect(() => {
-    if (!isOpen) {
-      // Ensure camera is stopped when modal is closed
-      const stopCamera = () => {
-        if (videoRef.current?.srcObject) {
-          const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-          tracks.forEach((track) => track.stop());
-          videoRef.current.srcObject = null;
-        }
-      };
-      stopCamera();
-    }
-  }, [isOpen]);
+    onBarcodeDetectedRef.current = onBarcodeDetected;
+    onErrorRef.current = onError;
+    onCloseRef.current = onClose;
+  }, [onBarcodeDetected, onError, onClose]);
 
   useEffect(() => {
-    let intervalId: NodeJS.Timeout | null = null;
-
     const stopCamera = () => {
+      if (isCleaningUpRef.current) return; // Prevent multiple stops
+      
       console.log("Stopping camera...");
-      if (videoRef.current?.srcObject) {
-        const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-        tracks.forEach((track) => {
+      isCleaningUpRef.current = true;
+      
+      // Stop the current stream directly
+      if (currentStreamRef.current) {
+        currentStreamRef.current.getTracks().forEach(track => {
           track.stop();
-          console.log("Stopped track:", track.kind);
+          console.log("Stopped current stream track:", track.kind);
         });
-        videoRef.current.srcObject = null;
+        currentStreamRef.current = null;
       }
-      if (intervalId) {
-        clearInterval(intervalId);
-        intervalId = null;
+      
+      // Stop the video stream
+      stopVideoStream(videoRef.current);
+      
+      // Also stop all camera streams as a backup
+      stopAllCameraStreams();
+      
+      // Clear the interval
+      if (intervalIdRef.current) {
+        clearInterval(intervalIdRef.current);
+        intervalIdRef.current = null;
         console.log("Cleared interval");
       }
+      
+      // Reset state
       setIsScanning(false);
       setBarcodeResult(null);
+      cameraInitializedRef.current = false;
+      
+      // Force video element cleanup
+      if (videoRef.current) {
+        videoRef.current.pause();
+        videoRef.current.srcObject = null;
+        videoRef.current.load();
+      }
+      
+      // Reset cleanup flag after a short delay
+      setTimeout(() => {
+        isCleaningUpRef.current = false;
+      }, 100);
     };
 
     const startCamera = async () => {
-      if (!isOpen) return;
+      if (cameraInitializedRef.current || isCleaningUpRef.current) return;
       
       try {
+        cameraInitializedRef.current = true;
         setIsScanning(true);
         setError(null);
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: { ideal: "environment" } }
         });
+        currentStreamRef.current = stream;
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.onloadedmetadata = () => {
             videoRef.current?.play();
-            intervalId = setInterval(captureFrameAndCrop, 100);
+            intervalIdRef.current = setInterval(captureFrameAndCrop, 100);
           };
         }
       } catch (err) {
         console.error("Camera error:", err);
         const errorMessage = "Unable to access the camera. Please check permissions.";
         setError(errorMessage);
-        onError?.(errorMessage);
+        onErrorRef.current?.(errorMessage);
+        cameraInitializedRef.current = false;
       }
     };
 
@@ -95,13 +127,13 @@ export default function BarcodeScanner({
 
       const video = videoRef.current;
       const displayCanvas = displayCroppedCanvasRef.current;
-      const displayContext = displayCanvas.getContext("2d");
+      const displayContext = displayCanvas.getContext("2d", { willReadFrequently: true });
       const overlayDiv = cropOverlayRef.current;
 
       if (!displayContext) return;
 
       const tempCanvas = document.createElement("canvas");
-      const tempContext = tempCanvas.getContext("2d");
+      const tempContext = tempCanvas.getContext("2d", { willReadFrequently: true });
       if (!tempContext) return;
 
       tempCanvas.width = video.videoWidth;
@@ -164,9 +196,9 @@ export default function BarcodeScanner({
           const barcodeText = result.getText();
           console.log("Decoded barcode:", barcodeText);
           setBarcodeResult(barcodeText);
-          onBarcodeDetected(barcodeText);
+          onBarcodeDetectedRef.current(barcodeText);
           // Automatically close the scanner when barcode is detected
-          onClose?.();
+          onCloseRef.current?.();
         } catch (err: unknown) {
           if (err instanceof Error && err.name !== "NotFoundException") {
             console.error("Decoding error:", err);
@@ -177,17 +209,28 @@ export default function BarcodeScanner({
       decodeCanvas();
     };
 
-    if (isOpen) {
-      startCamera();
-    } else {
-      stopCamera();
+    // Only run camera logic if the component is actually mounted and visible
+    if (!isOpen) {
+      // If modal is closed and camera is running, stop it
+      if (cameraInitializedRef.current && !isCleaningUpRef.current) {
+        stopCamera();
+      }
+      return;
     }
 
+    // If modal is open and camera is not running, start it
+    if (!cameraInitializedRef.current && !isCleaningUpRef.current) {
+      startCamera();
+    }
+
+    // Cleanup function for component unmount
     return () => {
-      console.log("Component unmounting, stopping camera...");
-      stopCamera();
+      if (cameraInitializedRef.current && !isCleaningUpRef.current) {
+        console.log("Component unmounting, stopping camera...");
+        stopCamera();
+      }
     };
-  }, [isOpen, onBarcodeDetected, onError, onClose]);
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -200,7 +243,7 @@ export default function BarcodeScanner({
               Scan Barcode
             </h2>
             <button
-              onClick={onClose}
+              onClick={onCloseRef.current}
               className="text-gray-500 hover:text-gray-700 text-2xl p-1"
             >
               ×
@@ -261,7 +304,7 @@ export default function BarcodeScanner({
 
           <div className="flex justify-center pt-2">
             <button
-              onClick={onClose}
+              onClick={onCloseRef.current}
               className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors text-sm"
             >
               Close Scanner

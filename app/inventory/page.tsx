@@ -6,7 +6,6 @@ import Link from 'next/link'
 const inventoryButtons = [
   { label: 'اضافة منتج جديد', icon: '➕', href: '/inventory/new-product' },
   { label: 'عرض المنتجات', icon: '📦', href: '/inventory/products' },
-  { label: 'مسح الباركود', icon: '📱', href: '/inventory/barcode-scanner/simple' },
   { label: 'اضافة تصنيف جديد', icon: '🏷️', onClick: () => alert('اضافة تصنيف جديد') },
   { label: 'تعديل اسعار المنتجات', icon: '💲', onClick: () => alert('تعديل اسعار المنتجات') },
   { label: 'استيراد بيانات المنتجات من ملف اكسل', icon: '📥', onClick: () => alert('استيراد بيانات المنتجات من ملف اكسل') },
