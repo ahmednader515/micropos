@@ -21,7 +21,7 @@ export default function MainLayout({ children, navbarTitle, onBack, menuOptions,
   const [menuOpen, setMenuOpen] = useState(false)
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex h-screen bg-gray-100 flex-row-reverse">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
@@ -31,8 +31,8 @@ export default function MainLayout({ children, navbarTitle, onBack, menuOptions,
       )}
       
       {/* Sidebar */}
-      <div className={`fixed inset-y-0 right-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${
-        sidebarOpen ? 'translate-x-0' : 'translate-x-full'
+      <div className={`fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0 ${
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         <Sidebar onClose={() => setSidebarOpen(false)} />
       </div>
@@ -60,36 +60,40 @@ export default function MainLayout({ children, navbarTitle, onBack, menuOptions,
                 </div>
                 {/* Menu button */}
                 <div className="relative" style={{ minWidth: 40 }}>
-                  <button
-                    onClick={() => setMenuOpen((v) => !v)}
-                    className="text-gray-500 hover:text-gray-700 focus:outline-none focus:text-gray-700 px-2"
-                  >
-                    <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <circle cx="12" cy="12" r="1.5" />
-                      <circle cx="19.5" cy="12" r="1.5" />
-                      <circle cx="4.5" cy="12" r="1.5" />
-                    </svg>
-                  </button>
-                  {menuOpen && menuOptions && menuOptions.length > 0 && (
-                    <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded shadow-lg z-50 max-h-64 overflow-y-auto">
-                      {menuOptions.map((option, idx) => (
-                        <button
-                          key={idx}
-                          onClick={() => {
-                            setMenuOpen(false)
-                            option.onClick()
-                          }}
-                          className="block w-full text-right px-4 py-2 text-gray-700 hover:bg-gray-100 text-sm"
-                        >
-                          {option.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
+                  {menuOptions && menuOptions.length > 0 ? (
+                    <>
+                      <button
+                        onClick={() => setMenuOpen((v) => !v)}
+                        className="text-gray-500 hover:text-gray-700 focus:outline-none focus:text-gray-700 px-2"
+                      >
+                        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <circle cx="12" cy="12" r="1.5" />
+                          <circle cx="19.5" cy="12" r="1.5" />
+                          <circle cx="4.5" cy="12" r="1.5" />
+                        </svg>
+                      </button>
+                      {menuOpen && (
+                        <div className="absolute left-0 mt-2 w-48 bg-white border border-gray-200 rounded shadow-lg z-50 max-h-64 overflow-y-auto">
+                          {menuOptions.map((option, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => {
+                                setMenuOpen(false)
+                                option.onClick()
+                              }}
+                              className="block w-full text-right px-4 py-2 text-gray-900 hover:bg-gray-100 text-sm"
+                            >
+                              {option.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  ) : null}
                 </div>
               </div>
             ) : (
-              <div className="flex items-center justify-between px-4 py-3">
+              <div className="flex flex-row-reverse items-center justify-between px-4 py-3">
                 <button
                   onClick={() => setSidebarOpen(true)}
                   className="text-white hover:text-gray-100 focus:outline-none focus:text-gray-100"

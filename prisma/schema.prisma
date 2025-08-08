@@ -41,6 +41,8 @@ model Product {
   name        String   @unique
   description String?
   price       Decimal  @db.Decimal(10, 2)
+  price2      Decimal  @db.Decimal(10, 2) @default(0)
+  price3      Decimal  @db.Decimal(10, 2) @default(0)
   costPrice   Decimal  @db.Decimal(10, 2) @default(0)
   stock       Int      @default(0)
   minStock    Int      @default(0)
@@ -48,6 +50,13 @@ model Product {
   sku         String?  @unique
   categoryId  String?
   category    Category? @relation(fields: [categoryId], references: [id])
+  expiryDate  DateTime?
+  tax         Decimal  @db.Decimal(10, 2) @default(0)
+  unit        String?
+  unitPackage String?  // عبوة الوحدة
+  higherPackage String? // العبوة الأعلي
+  color       String?   // product square color
+  imageUrl    String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

@@ -30,7 +30,7 @@ const backup = [
 
 export default function Sidebar({ onClose }: SidebarProps) {
   return (
-    <div className="flex h-full w-64 flex-col bg-white border-l border-gray-200" dir="rtl">
+    <div className="flex h-full w-64 flex-col bg-white border-r border-gray-200" dir="rtl">
       <div className="flex h-16 items-center justify-between border-b border-gray-200 px-4 flex-shrink-0">
         <h1 className="text-xl font-bold text-gray-900">مايكرو POS</h1>
         {/* Mobile close button */}

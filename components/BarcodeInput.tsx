@@ -69,7 +69,7 @@ export default function BarcodeInput({
         />
         <button
           onClick={() => setIsScannerOpen(true)}
-          className="px-2 py-1.5 sm:px-3 sm:py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors flex items-center justify-center min-w-[40px] sm:min-w-[44px]"
+          className="px-2 py-1.5 sm:px-3 sm:py-2 bg-[#DDDDDD] text-gray-900 rounded-md hover:bg-[#CFCFCF] transition-colors flex items-center justify-center min-w-[40px] sm:min-w-[44px]"
           title="Scan barcode"
         >
           <svg

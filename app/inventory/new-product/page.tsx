@@ -13,11 +13,19 @@ interface NewProductForm {
   name: string
   description: string
   price: string
+  price2: string
+  price3: string
   costPrice: string
   stock: string
   minStock: string
   barcode: string
-  sku: string
+  expiryDate: string
+  tax: string
+  unit: string
+  unitPackage: string
+  higherPackage: string
+  color: string
+  imageUrl: string
   categoryId: string
 }
 
@@ -28,13 +36,23 @@ export default function NewProductPage() {
     name: '',
     description: '',
     price: '',
+    price2: '',
+    price3: '',
     costPrice: '',
     stock: '',
     minStock: '',
     barcode: '',
-    sku: '',
+    expiryDate: '',
+    tax: '',
+    unit: '',
+    unitPackage: '',
+    higherPackage: '',
+    color: '#3b82f6',
+    imageUrl: '',
     categoryId: ''
   })
+
+  const presetColors: string[] = ['#ef4444', '#22c55e', '#3b82f6', '#facc15', '#ffffff']
 
   useEffect(() => {
     fetchCategories()
@@ -65,9 +83,13 @@ export default function NewProductPage() {
         body: JSON.stringify({
           ...formData,
           price: parseFloat(formData.price),
+          price2: formData.price2 ? parseFloat(formData.price2) : 0,
+          price3: formData.price3 ? parseFloat(formData.price3) : 0,
           costPrice: parseFloat(formData.costPrice),
           stock: parseInt(formData.stock),
           minStock: parseInt(formData.minStock),
+          tax: formData.tax ? parseFloat(formData.tax) : 0,
+          expiryDate: formData.expiryDate ? new Date(formData.expiryDate).toISOString() : null,
         }),
       })
 
@@ -78,11 +100,19 @@ export default function NewProductPage() {
           name: '',
           description: '',
           price: '',
+          price2: '',
+          price3: '',
           costPrice: '',
           stock: '',
           minStock: '',
           barcode: '',
-          sku: '',
+          expiryDate: '',
+          tax: '',
+          unit: '',
+          unitPackage: '',
+          higherPackage: '',
+          color: '#3b82f6',
+          imageUrl: '',
           categoryId: ''
         })
       } else {
@@ -123,6 +153,12 @@ export default function NewProductPage() {
         input[type="number"] {
           color: black !important;
         }
+        input[type="date"] {
+          color: black !important;
+        }
+        input[type="date"]::-webkit-datetime-edit {
+          color: black !important;
+        }
         textarea {
           color: black !important;
         }
@@ -148,46 +184,38 @@ export default function NewProductPage() {
 
         <div className="bg-white shadow-sm rounded-lg p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Basic Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                  اسم المنتج *
-                </label>
-                <input
-                  type="text"
-                  id="name"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="أدخل اسم المنتج"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 mb-2">
-                  الفئة
-                </label>
-                <select
-                  id="categoryId"
-                  name="categoryId"
-                  value={formData.categoryId}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="">اختر الفئة</option>
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
+            {/* 1 - Barcode */}
+            <div>
+              <label htmlFor="barcode" className="block text-sm font-medium text-gray-700 mb-2">
+                الباركود
+              </label>
+              <BarcodeInput
+                value={formData.barcode}
+                onChange={(value) => setFormData(prev => ({ ...prev, barcode: value }))}
+                onBarcodeDetected={handleBarcodeDetected}
+                placeholder="ادخل الباركود يدوياً أو اضغط على أيقونة الماسح"
+                className="w-full"
+              />
             </div>
 
-            {/* Description */}
+            {/* 2 - Product Name */}
+            <div>
+              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                اسم المنتج *
+              </label>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+                required
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="أدخل اسم المنتج"
+              />
+            </div>
+
+            {/* 3 - Description */}
             <div>
               <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
                 الوصف
@@ -203,11 +231,11 @@ export default function NewProductPage() {
               />
             </div>
 
-            {/* Pricing */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* 4 - Three Selling Prices */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <div>
                 <label htmlFor="price" className="block text-sm font-medium text-gray-700 mb-2">
-                  سعر البيع *
+                  سعر البيع 1 *
                 </label>
                 <input
                   type="number"
@@ -222,16 +250,31 @@ export default function NewProductPage() {
                   placeholder="0.00"
                 />
               </div>
-
               <div>
-                <label htmlFor="costPrice" className="block text-sm font-medium text-gray-700 mb-2">
-                  سعر التكلفة
+                <label htmlFor="price2" className="block text-sm font-medium text-gray-700 mb-2">
+                  سعر البيع 2
                 </label>
                 <input
                   type="number"
-                  id="costPrice"
-                  name="costPrice"
-                  value={formData.costPrice}
+                  id="price2"
+                  name="price2"
+                  value={formData.price2}
+                  onChange={handleInputChange}
+                  min="0"
+                  step="0.01"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="0.00"
+                />
+              </div>
+              <div>
+                <label htmlFor="price3" className="block text-sm font-medium text-gray-700 mb-2">
+                  سعر البيع 3
+                </label>
+                <input
+                  type="number"
+                  id="price3"
+                  name="price3"
+                  value={formData.price3}
                   onChange={handleInputChange}
                   min="0"
                   step="0.01"
@@ -241,71 +284,204 @@ export default function NewProductPage() {
               </div>
             </div>
 
-            {/* Stock Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-2">
-                  الكمية المتوفرة *
-                </label>
-                <input
-                  type="number"
-                  id="stock"
-                  name="stock"
-                  value={formData.stock}
-                  onChange={handleInputChange}
-                  required
-                  min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="0"
-                />
-              </div>
+            {/* 5 - Buying Price */}
+            <div>
+              <label htmlFor="costPrice" className="block text-sm font-medium text-gray-700 mb-2">
+                سعر الشراء / التكلفة
+              </label>
+              <input
+                type="number"
+                id="costPrice"
+                name="costPrice"
+                value={formData.costPrice}
+                onChange={handleInputChange}
+                min="0"
+                step="0.01"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="0.00"
+              />
+            </div>
 
-              <div>
-                <label htmlFor="minStock" className="block text-sm font-medium text-gray-700 mb-2">
-                  الحد الأدنى للمخزون
-                </label>
-                <input
-                  type="number"
-                  id="minStock"
-                  name="minStock"
-                  value={formData.minStock}
-                  onChange={handleInputChange}
-                  min="0"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="0"
-                />
+            {/* 6 - Quantity */}
+            <div>
+              <label htmlFor="stock" className="block text-sm font-medium text-gray-700 mb-2">
+                الكمية المتوفرة *
+              </label>
+              <input
+                type="number"
+                id="stock"
+                name="stock"
+                value={formData.stock}
+                onChange={handleInputChange}
+                required
+                min="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="0"
+              />
+            </div>
+
+            {/* 7 - Order limit */}
+            <div>
+              <label htmlFor="minStock" className="block text-sm font-medium text-gray-700 mb-2">
+                حد إعادة الطلب
+              </label>
+              <input
+                type="number"
+                id="minStock"
+                name="minStock"
+                value={formData.minStock}
+                onChange={handleInputChange}
+                min="0"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="0"
+              />
+            </div>
+
+            {/* 8 - Expiry Date */}
+            <div>
+              <label htmlFor="expiryDate" className="block text-sm font-medium text-gray-700 mb-2">
+                تاريخ انتهاء الصلاحية
+              </label>
+              <input
+                type="date"
+                id="expiryDate"
+                name="expiryDate"
+                value={formData.expiryDate}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            {/* 9 - Tax */}
+            <div>
+              <label htmlFor="tax" className="block text-sm font-medium text-gray-700 mb-2">
+                الضريبة (%)
+              </label>
+              <input
+                type="number"
+                id="tax"
+                name="tax"
+                value={formData.tax}
+                onChange={handleInputChange}
+                min="0"
+                step="0.01"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="0"
+              />
+            </div>
+
+            {/* 10 - Category */}
+            <div>
+              <label htmlFor="categoryId" className="block text-sm font-medium text-gray-700 mb-2">
+                الفئة
+              </label>
+              <select
+                id="categoryId"
+                name="categoryId"
+                value={formData.categoryId}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">اختر الفئة</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* 11 - Unit */}
+            <div>
+              <label htmlFor="unit" className="block text-sm font-medium text-gray-700 mb-2">
+                الوحدة
+              </label>
+              <select
+                id="unit"
+                name="unit"
+                value={formData.unit}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="">اختر الوحدة</option>
+                <option value="gram">جرام</option>
+                <option value="kilogram">كيلوجرام</option>
+                <option value="liter">لتر</option>
+                <option value="milliliter">ملليلتر</option>
+                <option value="piece">قطعة</option>
+                <option value="box">علبة</option>
+              </select>
+            </div>
+
+            {/* 12 - عبوة الوحدة */}
+            <div>
+              <label htmlFor="unitPackage" className="block text-sm font-medium text-gray-700 mb-2">
+                عبوة الوحدة
+              </label>
+              <input
+                type="text"
+                id="unitPackage"
+                name="unitPackage"
+                value={formData.unitPackage}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="مثال: 6 قطع"
+              />
+            </div>
+
+            {/* 13 - العبوة الأعلي */}
+            <div>
+              <label htmlFor="higherPackage" className="block text-sm font-medium text-gray-700 mb-2">
+                العبوة الأعلي
+              </label>
+              <input
+                type="text"
+                id="higherPackage"
+                name="higherPackage"
+                value={formData.higherPackage}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="مثال: كرتونة"
+              />
+            </div>
+
+            {/* 14 - Product square color */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                لون مربع المنتج
+              </label>
+              <div className="flex items-center gap-3">
+                {presetColors.map((color) => {
+                  const isSelected = formData.color === color
+                  return (
+                    <button
+                      type="button"
+                      key={color}
+                      onClick={() => setFormData(prev => ({ ...prev, color }))}
+                      aria-label={`اختر اللون ${color}`}
+                      aria-pressed={isSelected}
+                      className={`w-10 h-10 rounded-md border-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${isSelected ? 'ring-2 ring-blue-500 border-blue-500' : 'border-gray-300'}`}
+                      style={{ backgroundColor: color }}
+                    />
+                  )
+                })}
               </div>
             </div>
 
-            {/* Product Codes */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label htmlFor="barcode" className="block text-sm font-medium text-gray-700 mb-2">
-                  الباركود
-                </label>
-                <BarcodeInput
-                  value={formData.barcode}
-                  onChange={(value) => setFormData(prev => ({ ...prev, barcode: value }))}
-                  onBarcodeDetected={handleBarcodeDetected}
-                  placeholder="ادخل الباركود يدوياً أو اضغط على أيقونة الماسح"
-                  className="w-full"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="sku" className="block text-sm font-medium text-gray-700 mb-2">
-                  رمز المنتج (SKU)
-                </label>
-                <input
-                  type="text"
-                  id="sku"
-                  name="sku"
-                  value={formData.sku}
-                  onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="رمز المنتج"
-                />
-              </div>
+            {/* 15 - Product image (optional) */}
+            <div>
+              <label htmlFor="imageUrl" className="block text-sm font-medium text-gray-700 mb-2">
+                صورة المنتج (اختياري) - رابط
+              </label>
+              <input
+                type="url"
+                id="imageUrl"
+                name="imageUrl"
+                value={formData.imageUrl}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="https://example.com/image.jpg"
+              />
             </div>
 
             {/* Submit Button */}
@@ -313,14 +489,14 @@ export default function NewProductPage() {
               <button
                 type="button"
                 onClick={() => window.history.back()}
-                className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="px-4 py-2 bg-[#DDDDDD] text-gray-900 rounded-md text-sm font-medium hover:bg-[#CFCFCF] focus:outline-none focus:ring-2 focus:ring-gray-300"
               >
                 إلغاء
               </button>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-[#DDDDDD] text-gray-900 rounded-md text-sm font-medium hover:bg-[#CFCFCF] focus:outline-none focus:ring-2 focus:ring-gray-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {loading ? 'جاري الإضافة...' : 'إضافة المنتج'}
               </button>

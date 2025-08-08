@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import MainLayout from '@/components/MainLayout'
 import FlashNotification from '@/components/FlashNotification'
 import BarcodeInput from '@/components/BarcodeInput'
@@ -36,6 +36,8 @@ export default function InventoryProductsPage() {
   const [showPopup, setShowPopup] = useState(false)
   const [quickEditForm, setQuickEditForm] = useState<QuickEditForm>({ stock: '', price: '' })
   const [updating, setUpdating] = useState(false)
+  const [showMoreMenu, setShowMoreMenu] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [notification, setNotification] = useState<{
     message: string
     type: 'success' | 'error' | 'info'
@@ -45,6 +47,8 @@ export default function InventoryProductsPage() {
     type: 'info',
     isVisible: false
   })
+
+  const selectAllRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     fetchProducts()
@@ -83,6 +87,38 @@ export default function InventoryProductsPage() {
       price: product.price.toString()
     })
     setShowPopup(true)
+  }
+
+  const allVisibleSelected = filteredProducts.length > 0 && filteredProducts.every(p => selectedIds.has(p.id))
+  const someVisibleSelected = filteredProducts.some(p => selectedIds.has(p.id)) && !allVisibleSelected
+
+  useEffect(() => {
+    if (selectAllRef.current) {
+      selectAllRef.current.indeterminate = someVisibleSelected
+    }
+  }, [someVisibleSelected])
+
+  const toggleSelectAllVisible = () => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (allVisibleSelected) {
+        // Deselect all visible
+        filteredProducts.forEach(p => next.delete(p.id))
+      } else {
+        // Select all visible
+        filteredProducts.forEach(p => next.add(p.id))
+      }
+      return next
+    })
+  }
+
+  const toggleSelectProduct = (productId: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(productId)) next.delete(productId)
+      else next.add(productId)
+      return next
+    })
   }
 
   const showNotification = (message: string, type: 'success' | 'error' | 'info' = 'info') => {
@@ -211,24 +247,72 @@ export default function InventoryProductsPage() {
         onClose={() => setNotification(prev => ({ ...prev, isVisible: false }))}
       />
       <MainLayout
-        navbarTitle="عرض المنتجات"
+        navbarTitle="المنتجات المتوفرة في المخزن"
         onBack={() => window.history.back()}
-        menuOptions={[
-          { label: 'إضافة منتج جديد', onClick: () => window.location.href = '/inventory/new-product' },
-          { label: 'تصدير البيانات', onClick: () => showNotification('سيتم إضافة ميزة التصدير قريباً', 'info') },
-        ]}
       >
       <div className="space-y-6">
 
         {/* Search Filter */}
         <div className="bg-white rounded-lg p-4 shadow-sm" dir="rtl">
-          <BarcodeInput
-            value={searchTerm}
-            onChange={setSearchTerm}
-            onBarcodeDetected={handleBarcodeSearch}
-            placeholder="بحث بالاسم أو الباركود أو SKU"
-            className="rtl"
-          />
+          <div className="flex items-center gap-3">
+            <div className="flex-1">
+              <BarcodeInput
+                value={searchTerm}
+                onChange={setSearchTerm}
+                onBarcodeDetected={handleBarcodeSearch}
+                placeholder="بحث"
+                className="w-full"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Actions Row */}
+        <div className="bg-white rounded-lg p-3 shadow-sm" dir="rtl">
+          <div className="grid grid-cols-3 gap-2 w-full">
+            <button
+              className="w-full py-2 bg-[#DDDDDD] text-gray-900 rounded-md text-sm hover:bg-[#CFCFCF]"
+              onClick={() => (window.location.href = '/reports')}
+            >
+              تقرير
+            </button>
+            <button
+              className="w-full py-2 bg-[#DDDDDD] text-gray-900 rounded-md text-sm hover:bg-[#CFCFCF]"
+              onClick={() => (window.location.href = '/barcode-demo')}
+            >
+              صناعة باركود
+            </button>
+            <div className="relative">
+              <button
+                className="w-full py-2 bg-[#DDDDDD] text-gray-900 rounded-md text-sm hover:bg-[#CFCFCF]"
+                onClick={() => setShowMoreMenu(v => !v)}
+              >
+                المزيد
+              </button>
+              {showMoreMenu && (
+                <div className="absolute mt-2 right-0 w-40 bg-white border border-gray-200 rounded-md shadow-lg z-10">
+                  <button
+                    className="block w-full text-right px-3 py-2 text-sm text-gray-900 hover:bg-gray-50"
+                    onClick={() => {
+                      setShowMoreMenu(false)
+                      showNotification('سيتم إضافة تغيير اللون قريباً', 'info')
+                    }}
+                  >
+                    تغير اللون
+                  </button>
+                  <button
+                    className="block w-full text-right px-3 py-2 text-sm text-gray-900 hover:bg-gray-50"
+                    onClick={() => {
+                      setShowMoreMenu(false)
+                      showNotification('سيتم إضافة تغيير التصنيف قريباً', 'info')
+                    }}
+                  >
+                    تغير التصنيف
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {loading ? (
@@ -238,16 +322,26 @@ export default function InventoryProductsPage() {
         ) : (
           <div className="bg-white shadow-sm rounded-lg overflow-hidden" dir="rtl">
             <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+              <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
+                <thead className="bg-[#DDDDDD]">
                   <tr>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      المنتج
+                    <th className="px-2 py-1.5 text-right text-sm sm:text-base font-medium text-gray-900 uppercase tracking-wider"></th>
+                    <th className="px-2 py-1.5 text-right text-sm sm:text-base font-medium text-gray-900 uppercase tracking-wider">
+                      <div className="w-full text-right" dir="ltr">
+                        <span>المنتج</span>
+                        <input
+                          type="checkbox"
+                          ref={selectAllRef}
+                          checked={allVisibleSelected}
+                          onChange={toggleSelectAllVisible}
+                          className="ml-2"
+                        />
+                      </div>
                     </th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-2 py-1.5 text-right text-sm sm:text-base font-medium text-gray-900 uppercase tracking-wider">
                       السعر
                     </th>
-                    <th className="px-3 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-2 py-1.5 text-right text-sm sm:text-base font-medium text-gray-900 uppercase tracking-wider">
                       الكمية
                     </th>
                   </tr>
@@ -259,19 +353,31 @@ export default function InventoryProductsPage() {
                       onClick={() => handleProductClick(product)}
                       className="hover:bg-gray-50 cursor-pointer"
                     >
-                      <td className="px-3 py-3 whitespace-nowrap">
-                        <div className="text-xs font-medium text-gray-900 truncate max-w-24">
+                      <td className="px-2 py-2 whitespace-nowrap text-right">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(product.id)}
+                          onClick={(e) => e.stopPropagation()}
+                          onChange={() => toggleSelectProduct(product.id)}
+                        />
+                      </td>
+                      <td className="px-2 py-2 whitespace-nowrap">
+                        <div className="text-[11px] sm:text-xs font-medium text-gray-900 truncate max-w-24 leading-tight">
                           {product.name}
                           {!product.isActive && (
                             <span className="ml-1 text-red-500 text-xs">(مجمد)</span>
                           )}
                         </div>
                       </td>
-                      <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-900">
-                        {product.price.toFixed(2)}
+                      <td className="px-2 py-2 whitespace-nowrap text-[11px] sm:text-xs text-gray-900">
+                        <span className="inline-flex items-center justify-center w-20 h-7 sm:w-24 sm:h-8 rounded-md bg-yellow-100 text-gray-900 font-medium">
+                          {product.price.toFixed(2)}
+                        </span>
                       </td>
-                      <td className="px-3 py-3 whitespace-nowrap text-xs text-gray-900">
-                        {product.stock}
+                      <td className="px-2 py-2 whitespace-nowrap text-[11px] sm:text-xs text-gray-900">
+                        <span className="inline-flex items-center justify-center w-20 h-7 sm:w-24 sm:h-8 rounded-md bg-yellow-100 text-gray-900 font-medium">
+                          {product.stock}
+                        </span>
                       </td>
                     </tr>
                   ))}

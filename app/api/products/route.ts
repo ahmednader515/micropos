@@ -60,7 +60,25 @@ export async function POST(request: Request) {
     await prisma.$connect()
     
     const body = await request.json()
-    const { name, description, price, costPrice, stock, minStock, barcode, sku, categoryId } = body
+    const {
+      name,
+      description,
+      price,
+      price2,
+      price3,
+      costPrice,
+      stock,
+      minStock,
+      barcode,
+      categoryId,
+      expiryDate,
+      tax,
+      unit,
+      unitPackage,
+      higherPackage,
+      color,
+      imageUrl,
+    } = body
 
     // Validate required fields
     if (!name || !price || stock === undefined) {
@@ -88,12 +106,20 @@ export async function POST(request: Request) {
         name,
         description: description || '',
         price,
+        price2: price2 || 0,
+        price3: price3 || 0,
         costPrice: costPrice || 0,
         stock: stock || 0,
         minStock: minStock || 0,
         barcode: barcode || null,
-        sku: sku || null,
         categoryId: categoryId || null,
+        expiryDate: expiryDate ? new Date(expiryDate) : null,
+        tax: tax || 0,
+        unit: unit || null,
+        unitPackage: unitPackage || null,
+        higherPackage: higherPackage || null,
+        color: color || null,
+        imageUrl: imageUrl || null,
         isActive: true
       },
       include: {
@@ -112,6 +138,8 @@ export async function POST(request: Request) {
       product: {
         ...product,
         price: Number(product.price),
+        price2: Number(product.price2),
+        price3: Number(product.price3),
         costPrice: Number(product.costPrice)
       }
     })
