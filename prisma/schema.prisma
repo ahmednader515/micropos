@@ -189,6 +189,7 @@ model Expense {
   category    String?
   date        DateTime      @default(now())
   paymentMethod PaymentMethod @default(CASH)
+  receiptUrl  String?       // URL for receipt image/file
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
@@ -252,6 +253,7 @@ enum PaymentMethod {
   BANK_TRANSFER
   CHECK
   MOBILE_PAYMENT
+  CASHBOX
 }
 
 enum TransactionType {
