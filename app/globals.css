@@ -7,16 +7,17 @@
   --foreground: #171717;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* Disable automatic dark theme variables to keep consistent contrast */
+/* If you want dark mode later, implement explicit theme toggling instead */
 
 body {
-  color: var(--foreground);
+  color: #111827; /* Tailwind gray-900 */
   background: var(--background);
+}
+
+/* Ensure form controls default to readable text */
+input, textarea, select, button {
+  color: #111827;
 }
 
 /* RTL Support */

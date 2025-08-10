@@ -6,9 +6,9 @@ import Link from 'next/link'
 const inventoryButtons = [
   { label: 'اضافة منتج جديد', icon: '➕', href: '/inventory/new-product' },
   { label: 'عرض المنتجات', icon: '📦', href: '/inventory/products' },
-  { label: 'اضافة تصنيف جديد', icon: '🏷️', onClick: () => alert('اضافة تصنيف جديد') },
-  { label: 'تعديل اسعار المنتجات', icon: '💲', onClick: () => alert('تعديل اسعار المنتجات') },
-  { label: 'استيراد بيانات المنتجات من ملف اكسل', icon: '📥', onClick: () => alert('استيراد بيانات المنتجات من ملف اكسل') },
+  { label: 'اضافة تصنيف جديد', icon: '🏷️', href: '/inventory/categories/new' },
+  { label: 'تعديل اسعار المنتجات', icon: '💲', href: '/inventory/price-adjust' },
+  { label: 'استيراد بيانات المنتجات من ملف اكسل/CSV', icon: '📥', href: '/inventory/import' },
 ];
 
 function InventoryNavbar() {
