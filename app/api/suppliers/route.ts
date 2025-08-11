@@ -6,7 +6,6 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export async function GET() {
-  if (isVercelBuild()) return NextResponse.json(buildTimeResponses.suppliers)
   try {
     const suppliers = await prisma.supplier.findMany({ orderBy: { createdAt: 'desc' } })
     return NextResponse.json({ suppliers })
@@ -16,7 +15,6 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (isBuildTime() || isVercelBuild()) return NextResponse.json(buildTimeResponses.error, { status: 503 })
   try {
     const body = await request.json()
     const { name, email, phone, address, balance } = body
@@ -41,7 +39,6 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  if (isBuildTime() || isVercelBuild()) return NextResponse.json(buildTimeResponses.error, { status: 503 })
   try {
     const body = await request.json()
     const { id, ...data } = body
@@ -54,7 +51,6 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  if (isBuildTime() || isVercelBuild()) return NextResponse.json(buildTimeResponses.error, { status: 503 })
   try {
     const { searchParams } = new URL(request.url)
     const id = searchParams.get('id')

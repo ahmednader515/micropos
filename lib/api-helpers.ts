@@ -6,8 +6,9 @@ export function isBuildTime(): boolean {
 }
 
 // Helper function to check if we're in Vercel build environment
+// Runtime on Vercel should NOT be treated as build-time. Only skip DB at actual build time.
 export function isVercelBuild(): boolean {
-  return process.env.VERCEL === '1' || process.env.NODE_ENV === 'production'
+  return false
 }
 
 // Helper function to return build-time safe responses

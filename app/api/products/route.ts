@@ -7,11 +7,6 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export async function GET() {
-  // Immediate return for Vercel builds
-  if (isVercelBuild()) {
-    return NextResponse.json(buildTimeResponses.products)
-  }
-
   return safeDatabaseOperation(
     async () => {
       await prisma.$connect()
@@ -49,13 +44,6 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  if (isBuildTime() || isVercelBuild()) {
-    return NextResponse.json(
-      buildTimeResponses.error,
-      { status: 503 }
-    )
-  }
-
   try {
     await prisma.$connect()
     
@@ -146,13 +134,6 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error('Error creating product:', error)
-    
-    if (isBuildTime() || isVercelBuild()) {
-      return NextResponse.json(
-        buildTimeResponses.error,
-        { status: 503 }
-      )
-    }
     
     return NextResponse.json(
       { error: 'Failed to create product' },

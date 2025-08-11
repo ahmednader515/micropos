@@ -6,10 +6,6 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export async function GET() {
-  if (isVercelBuild()) {
-    return NextResponse.json(buildTimeResponses.customers)
-  }
-
   return safeDatabaseOperation(
     async () => {
       await prisma.$connect()
@@ -63,10 +59,6 @@ async function generateUniqueCustomerNumber(): Promise<string> {
 }
 
 export async function POST(request: Request) {
-  if (isBuildTime() || isVercelBuild()) {
-    return NextResponse.json(buildTimeResponses.error, { status: 503 })
-  }
-
   try {
     await prisma.$connect()
 
@@ -152,9 +144,6 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     console.error('Error creating customer:', error)
-    if (isBuildTime() || isVercelBuild()) {
-      return NextResponse.json(buildTimeResponses.error, { status: 503 })
-    }
     return NextResponse.json({ error: 'Failed to create customer' }, { status: 500 })
   }
 }
