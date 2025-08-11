@@ -5,6 +5,7 @@ import { safeDatabaseOperation, isBuildTime, isVercelBuild } from '@/lib/api-hel
 // Force dynamic rendering - disable static generation
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
+export const runtime = 'nodejs'
 
 const fallbackCashbox = {
   balance: '0.00',
@@ -28,14 +29,10 @@ export async function GET() {
 
   return safeDatabaseOperation(
     async () => {
-      await prisma.$connect()
-
       const transactions = await prisma.cashboxTransaction.findMany({
         orderBy: { createdAt: 'desc' },
         take: 100 // Limit to last 100 transactions
       })
-
-      await prisma.$disconnect()
 
       const balance = transactions.reduce((acc, transaction) => {
         if (transaction.type === 'INCOME') {
@@ -72,6 +69,14 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // Ensure database is configured at runtime
+  if (!process.env.DATABASE_URL) {
+    return NextResponse.json(
+      { error: 'قاعدة البيانات غير مُهيأة على الخادم' },
+      { status: 503 }
+    )
+  }
+
   try {
     const body = await request.json()
     const { type, amount, description, reference, paymentMethod = 'CASH' } = body
@@ -93,7 +98,6 @@ export async function POST(request: NextRequest) {
 
     // Prevent negative balance on EXPENSE
     if (type === 'EXPENSE') {
-      await prisma.$connect()
       const currentTransactions = await prisma.cashboxTransaction.findMany()
       const currentBalance = currentTransactions.reduce((acc, transaction) => {
         if (transaction.type === 'INCOME') {
@@ -103,7 +107,6 @@ export async function POST(request: NextRequest) {
       }, 0)
 
       if (currentBalance - amountNum < 0) {
-        await prisma.$disconnect()
         return NextResponse.json(
           { error: 'رصيد الصندوق غير كافي لإتمام هذه العملية' },
           { status: 400 }
@@ -112,7 +115,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Create transaction
-    await prisma.$connect()
     const transaction = await prisma.cashboxTransaction.create({
       data: {
         type,
@@ -122,7 +124,6 @@ export async function POST(request: NextRequest) {
         paymentMethod
       }
     })
-    await prisma.$disconnect()
 
     return NextResponse.json({
       message: type === 'INCOME' ? 'تم إضافة المبلغ بنجاح' : 'تم سحب المبلغ بنجاح',
