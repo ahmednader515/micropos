@@ -1,8 +1,8 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Cairo } from 'next/font/google'
 import './globals.css'
 
-const inter = Inter({ subsets: ['latin'] })
+const cairo = Cairo({ subsets: ['arabic', 'latin'], weight: ['400', '500', '700'] })
 
 export const metadata: Metadata = {
   title: 'microPOS - Point of Sale System',
@@ -21,7 +21,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="ar" dir="rtl">
-      <body className={inter.className}>{children}</body>
+      <body className={cairo.className}>{children}</body>
     </html>
   )
 } 

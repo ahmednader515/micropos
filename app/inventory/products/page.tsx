@@ -54,6 +54,8 @@ export default function InventoryProductsPage() {
     fetchProducts()
   }, [])
 
+  
+
   const fetchProducts = async () => {
     try {
       const response = await fetch('/api/products/inventory')
@@ -325,31 +327,26 @@ export default function InventoryProductsPage() {
               <table className="min-w-full divide-y divide-gray-200 text-xs sm:text-sm">
                 <thead className="bg-[#DDDDDD]">
                   <tr>
-                    <th className="px-2 py-1.5 text-right text-sm sm:text-base font-medium text-gray-900 uppercase tracking-wider"></th>
-                    <th className="px-2 py-1.5 text-right text-sm sm:text-base font-medium text-gray-900 uppercase tracking-wider">
-                      <div className="w-full text-right" dir="ltr">
-                        <span>المنتج</span>
+                    <th className="px-2 py-1.5 text-right text-sm sm:text-base font-medium text-gray-900 uppercase tracking-wider w-8">
+                      <div className="w-full flex items-center justify-end">
                         <input
                           type="checkbox"
                           ref={selectAllRef}
                           checked={allVisibleSelected}
                           onChange={toggleSelectAllVisible}
-                          className="ml-2"
+                          className="h-4 w-4"
                         />
                       </div>
                     </th>
-                    <th className="px-2 py-1.5 text-right text-sm sm:text-base font-medium text-gray-900 uppercase tracking-wider">
-                      السعر
-                    </th>
-                    <th className="px-2 py-1.5 text-right text-sm sm:text-base font-medium text-gray-900 uppercase tracking-wider">
-                      الكمية
-                    </th>
+                    <th className="px-2 py-1.5 text-right text-sm sm:text-base font-medium text-gray-900 uppercase tracking-wider">المنتج</th>
+                    <th className="px-2 py-1.5 text-right text-sm sm:text-base font-medium text-gray-900 uppercase tracking-wider">السعر</th>
+                    <th className="px-2 py-1.5 text-right text-sm sm:text-base font-medium text-gray-900 uppercase tracking-wider">الكمية</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {filteredProducts.map((product) => (
-                    <tr 
-                      key={product.id} 
+                    <tr
+                      key={product.id}
                       onClick={() => handleProductClick(product)}
                       className="hover:bg-gray-50 cursor-pointer"
                     >

@@ -7,10 +7,10 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 type BulkPricePayload = {
-  mode: 'percent' | 'fixed'
+  mode: 'percent' | 'fixed' | 'exchangeRate'
   amount: number
-  direction: 'increase' | 'decrease'
-  targets?: Array<'price' | 'price2' | 'price3'>
+  direction?: 'increase' | 'decrease'
+  targets?: Array<'price' | 'price2' | 'price3' | 'costPrice'>
   categoryId?: string | null
   onlyActive?: boolean
 }
@@ -24,8 +24,11 @@ export async function POST(request: Request) {
     const body = (await request.json()) as BulkPricePayload
     const { mode, amount, direction, targets = ['price'], categoryId, onlyActive = true } = body
 
-    if (!mode || !amount || !direction) {
-      return NextResponse.json({ error: 'المعاملات مطلوبة: الوضع والقيمة والاتجاه' }, { status: 400 })
+    if (!mode || amount === undefined || amount === null) {
+      return NextResponse.json({ error: 'المعاملات مطلوبة: الوضع والقيمة' }, { status: 400 })
+    }
+    if ((mode === 'percent' || mode === 'fixed') && !direction) {
+      return NextResponse.json({ error: 'مطلوب الاتجاه لعمليات النسبة أو القيمة الثابتة' }, { status: 400 })
     }
 
     if (amount < 0) {
@@ -44,6 +47,7 @@ export async function POST(request: Request) {
         price: true,
         price2: true,
         price3: true,
+        costPrice: true,
       },
     })
 
@@ -58,6 +62,9 @@ export async function POST(request: Request) {
       const next: Record<string, number> = {}
       const apply = (current: any) => {
         const currentNum = Number(current || 0)
+        if (mode === 'exchangeRate') {
+          return Number((currentNum * amount).toFixed(2))
+        }
         if (mode === 'percent') {
           return Number((currentNum + sign * (currentNum * (amount / 100))).toFixed(2))
         }
@@ -66,6 +73,7 @@ export async function POST(request: Request) {
       if (targets.includes('price')) next.price = apply(p.price)
       if (targets.includes('price2')) next.price2 = apply(p.price2)
       if (targets.includes('price3')) next.price3 = apply(p.price3)
+      if (targets.includes('costPrice')) next.costPrice = apply(p.costPrice)
       return prisma.product.update({ where: { id: p.id }, data: next })
     })
 

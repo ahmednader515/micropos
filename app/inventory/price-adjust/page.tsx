@@ -3,105 +3,171 @@
 import { useEffect, useState } from 'react'
 import MainLayout from '@/components/MainLayout'
 
+type Mode = 'percent' | 'fixed' | 'exchangeRate'
+
 export default function PriceAdjustPage() {
-  const [mode, setMode] = useState<'percent' | 'fixed'>('percent')
+  const [mode, setMode] = useState<Mode>('percent')
+  const [amount, setAmount] = useState<string>('')
   const [direction, setDirection] = useState<'increase' | 'decrease'>('increase')
-  const [amount, setAmount] = useState('0')
-  const [targets, setTargets] = useState<{ price: boolean; price2: boolean; price3: boolean }>({ price: true, price2: false, price3: false })
+  const [targetGroup, setTargetGroup] = useState<'selling' | 'purchase'>('selling')
   const [onlyActive, setOnlyActive] = useState(true)
-  const [categoryId, setCategoryId] = useState('')
-  const [categories, setCategories] = useState<{ id: string; name: string }[]>([])
-  const [loading, setLoading] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [message, setMessage] = useState<string>('')
 
-  // Load categories once
   useEffect(() => {
-    ;(async () => {
-      try {
-        const r = await fetch('/api/categories')
-        const j = await r.json()
-        setCategories(j.categories || [])
-      } catch {}
-    })()
-  }, [])
+    // If exchangeRate mode, direction is irrelevant
+    if (mode === 'exchangeRate') {
+      setDirection('increase')
+    }
+  }, [mode])
 
-  const toggle = (key: keyof typeof targets) => setTargets((p) => ({ ...p, [key]: !p[key] }))
+  // Single selection: either selling prices (price, price2, price3) or purchase price (costPrice)
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const value = parseFloat(amount)
-    if (!(value > 0)) return alert('أدخل قيمة صحيحة')
-    const selectedTargets = (['price', 'price2', 'price3'] as const).filter((k) => targets[k])
-    if (selectedTargets.length === 0) return alert('اختر حقلاً واحداً على الأقل')
-    setLoading(true)
+  const handleSubmit = async () => {
+    setMessage('')
+    const amt = Number(amount)
+    if (!amt || amt <= 0) {
+      setMessage('الرجاء إدخال قيمة صحيحة')
+      return
+    }
+    const targets = targetGroup === 'selling' ? ['price', 'price2', 'price3'] : ['costPrice']
+    setSubmitting(true)
     try {
-      const r = await fetch('/api/products/bulk-prices', {
+      const res = await fetch('/api/products/bulk-prices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode, direction, amount: value, targets: selectedTargets, onlyActive, categoryId: categoryId || null }),
+        body: JSON.stringify({
+          mode,
+          amount: amt,
+          direction: mode === 'exchangeRate' ? undefined : direction,
+          targets,
+          onlyActive,
+        }),
       })
-      const j = await r.json()
-      if (!r.ok) throw new Error(j.error || 'فشل العملية')
-      alert(`تم تحديث ${j.updated} منتج`)
+      const data = await res.json()
+      if (!res.ok) throw new Error(data?.error || 'فشل الطلب')
+      setMessage(`تم تحديث ${data.updated} منتجاً`)
+      setAmount('')
     } catch (e: any) {
-      alert(e.message || 'خطأ غير متوقع')
+      setMessage(e?.message || 'حدث خطأ')
     } finally {
-      setLoading(false)
+      setSubmitting(false)
     }
   }
 
   return (
-    <MainLayout navbarTitle="تعديل أسعار المنتجات" onBack={() => history.back()}>
-      <div className="max-w-2xl mx-auto" dir="rtl">
-        <form onSubmit={onSubmit} className="bg-white p-4 rounded shadow space-y-4">
-          <div className="grid grid-cols-2 gap-4">
+    <MainLayout navbarTitle="تعديل الأسعار" onBack={() => window.history.back()}>
+      <div className="max-w-2xl mx-auto mt-4 space-y-4" dir="rtl">
+        <div className="bg-white rounded-lg p-4 shadow-sm">
+          <div className="grid grid-cols-1 gap-4">
             <div>
-              <label className="block text-sm mb-1">الوضع</label>
-              <select value={mode} onChange={(e) => setMode(e.target.value as any)} className="w-full border rounded px-3 py-2">
-                <option value="percent">نسبة مئوية %</option>
-                <option value="fixed">قيمة ثابتة</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm mb-1">الاتجاه</label>
-              <select value={direction} onChange={(e) => setDirection(e.target.value as any)} className="w-full border rounded px-3 py-2">
-                <option value="increase">زيادة</option>
-                <option value="decrease">تخفيض</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm mb-1">القيمة</label>
-              <input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} className="w-full border rounded px-3 py-2" />
-            </div>
-            <div>
-              <label className="block text-sm mb-1">التصنيف</label>
-              <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className="w-full border rounded px-3 py-2">
-                <option value="">كل التصنيفات</option>
-                {categories.map((c) => (
-                  <option key={c.id} value={c.id}>{c.name}</option>
+              <label className="block text-sm font-medium text-gray-700 mb-2">الوضع</label>
+              <div className="flex flex-wrap gap-2">
+                {([
+                  { key: 'percent', label: 'نسبة %' },
+                  { key: 'fixed', label: 'قيمة ثابتة' },
+                  { key: 'exchangeRate', label: 'سعر صرف' },
+                ] as Array<{ key: Mode; label: string }>).map((opt) => (
+                  <button
+                    key={opt.key}
+                    onClick={() => setMode(opt.key)}
+                    className={`px-3 py-1.5 rounded border text-sm ${
+                      mode === opt.key ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-800 border-gray-300'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
                 ))}
-              </select>
+              </div>
+            </div>
+
+            {mode !== 'exchangeRate' && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">الاتجاه</label>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setDirection('increase')}
+                    className={`px-3 py-1.5 rounded border text-sm ${
+                      direction === 'increase' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-800 border-gray-300'
+                    }`}
+                  >
+                    رفع
+                  </button>
+                  <button
+                    onClick={() => setDirection('decrease')}
+                    className={`px-3 py-1.5 rounded border text-sm ${
+                      direction === 'decrease' ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-800 border-gray-300'
+                    }`}
+                  >
+                    خفض
+                  </button>
+                </div>
+              </div>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                {mode === 'exchangeRate' ? 'سعر الصرف' : 'القيمة'}
+              </label>
+              <input
+                type="number"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder={mode === 'exchangeRate' ? 'مثال: 1.2' : 'مثال: 10 أو 5%'}
+                min="0"
+                step="0.01"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">الحقول المستهدفة</label>
+              <div className="grid grid-cols-2 gap-2">
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="targetGroup"
+                    value="selling"
+                    checked={targetGroup === 'selling'}
+                    onChange={() => setTargetGroup('selling')}
+                  />
+                  <span>أسعار البيع (1، 2، 3)</span>
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="radio"
+                    name="targetGroup"
+                    value="purchase"
+                    checked={targetGroup === 'purchase'}
+                    onChange={() => setTargetGroup('purchase')}
+                  />
+                  <span>سعر الشراء</span>
+                </label>
+              </div>
+            </div>
+
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={onlyActive} onChange={(e) => setOnlyActive(e.target.checked)} />
+              <span>تطبيق على المنتجات الفعّالة فقط</span>
+            </label>
+
+            {message && (
+              <div className={`text-sm text-right mt-1 ${message.includes('تم تحديث') ? 'text-green-700' : 'text-red-700'}`}>
+                {message}
+              </div>
+            )}
+
+            <div className="flex justify-end">
+              <button
+                disabled={submitting}
+                onClick={handleSubmit}
+                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-50"
+              >
+                {submitting ? 'جاري التنفيذ...' : 'تطبيق التعديل'}
+              </button>
             </div>
           </div>
-
-          <div>
-            <label className="block text-sm mb-1">الحقول المستهدفة</label>
-            <div className="flex gap-4">
-              <label className="inline-flex items-center gap-2"><input type="checkbox" checked={targets.price} onChange={() => toggle('price')} /> سعر 1</label>
-              <label className="inline-flex items-center gap-2"><input type="checkbox" checked={targets.price2} onChange={() => toggle('price2')} /> سعر 2</label>
-              <label className="inline-flex items-center gap-2"><input type="checkbox" checked={targets.price3} onChange={() => toggle('price3')} /> سعر 3</label>
-            </div>
-          </div>
-
-          <label className="inline-flex items-center gap-2"><input type="checkbox" checked={onlyActive} onChange={(e) => setOnlyActive(e.target.checked)} /> المنتجات الفعالة فقط</label>
-
-          <div className="flex justify-end gap-2">
-            <button type="button" onClick={() => history.back()} className="px-4 py-2 bg-gray-100 rounded">إلغاء</button>
-            <button disabled={loading} className="px-4 py-2 bg-blue-600 text-white rounded">{loading ? 'جاري التنفيذ...' : 'تنفيذ'}</button>
-          </div>
-        </form>
+        </div>
       </div>
     </MainLayout>
   )
