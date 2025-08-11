@@ -3,7 +3,9 @@
 import MainLayout from '@/components/MainLayout'
 import Link from 'next/link'
 
-const inventoryButtons = [
+type InventoryButton = { label: string; icon: string } & ({ href: string } | { onClick: () => void })
+
+const inventoryButtons: InventoryButton[] = [
   { label: 'اضافة منتج جديد', icon: '➕', href: '/inventory/new-product' },
   { label: 'عرض المنتجات', icon: '📦', href: '/inventory/products' },
   { label: 'اضافة تصنيف جديد', icon: '🏷️', href: '/inventory/categories/new' },
@@ -40,7 +42,7 @@ export default function InventoryPage() {
       <InventoryNavbar />
       <div className="flex flex-col gap-4 mt-6">
         {inventoryButtons.map((btn, idx) => {
-          if (btn.href) {
+          if ('href' in btn) {
             return (
               <Link
                 key={idx}
