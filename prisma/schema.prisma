@@ -71,14 +71,28 @@ model Product {
 // Customers
 model Customer {
   id          String   @id @default(cuid())
-  name        String   @unique
-  email       String?
-  phone       String?
-  address     String?
-  balance     Decimal  @db.Decimal(10, 2) @default(0)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  customerNumber String?  @unique
+  barcode        String?  @unique
+  name           String   @unique
+  email          String?
+  phone          String?
+  address        String?
+  city           String?
+  streetName     String?
+  buildingNumber String?
+  postalCode     String?
+  taxRegistration        String?
+  commercialRegistration String?
+  cardType       String?
+  cardNumber     String?
+  notes          String?
+  priceTier      CustomerPriceTier @default(PRICE1)
+  creditLimit    Decimal  @db.Decimal(10, 2) @default(0)
+  dueDays        Int      @default(0)
+  balance        Decimal  @db.Decimal(10, 2) @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   // Relations
   sales    Sale[]
@@ -264,4 +278,10 @@ enum TransactionType {
 enum PaymentType {
   RECEIVE
   PAY
+}
+
+enum CustomerPriceTier {
+  PRICE1
+  PRICE2
+  PRICE3
 }

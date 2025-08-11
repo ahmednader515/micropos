@@ -5,10 +5,66 @@ import MainLayout from '@/components/MainLayout'
 const customersButtons = [
   { label: 'اضافة عميل جديد', icon: '➕', onClick: () => (window.location.href = '/customers/new') },
   { label: 'الارصدة الافتتاحية و المبالغ النقدية للعملاء', icon: '💵', onClick: () => (window.location.href = '/customers/balances') },
-  { label: 'ذمم العملاء - المبالغ المتبقية عند العملاء من الفواتير', icon: '🧾', onClick: () => (window.location.href = '/customers/receivables') },
-  { label: 'ذمم العملاء - تقرير', icon: '📄', onClick: () => (window.location.href = '/customers/receivables') },
-  { label: 'العملاء المتبقي لهم ارصدة - تقرير', icon: '📊', onClick: () => (window.location.href = '/customers/receivables?summary=1') },
-  { label: 'فحص ارصدة العملاء', icon: '🔍', onClick: () => (window.location.href = '/customers/audit') },
+  {
+    label: 'ذمم العملاء - المبالغ المتبقية عند العملاء من الفواتير',
+    icon: '🧾',
+    onClick: async () => {
+      const res = await fetch('/api/reports/customers/receivables', { method: 'GET' })
+      if (!res.ok) return alert('تعذّر إنشاء التقرير')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'customer_receivables.pdf'
+      a.click()
+      URL.revokeObjectURL(url)
+    }
+  },
+  {
+    label: 'ذمم العملاء - تقرير',
+    icon: '📄',
+    onClick: async () => {
+      const res = await fetch('/api/reports/customers/receivables?summary=1', { method: 'GET' })
+      if (!res.ok) return alert('تعذّر إنشاء التقرير')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'customer_receivables_summary.pdf'
+      a.click()
+      URL.revokeObjectURL(url)
+    }
+  },
+  {
+    label: 'العملاء المتبقي لهم ارصدة - تقرير',
+    icon: '📊',
+    onClick: async () => {
+      const res = await fetch('/api/reports/customers/balances', { method: 'GET' })
+      if (!res.ok) return alert('تعذّر إنشاء التقرير')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'customer_balances.pdf'
+      a.click()
+      URL.revokeObjectURL(url)
+    }
+  },
+  {
+    label: 'فحص ارصدة العملاء',
+    icon: '🔍',
+    onClick: async () => {
+      const res = await fetch('/api/reports/customers/audit', { method: 'GET' })
+      if (!res.ok) return alert('تعذّر إنشاء التقرير')
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = 'customer_audit.pdf'
+      a.click()
+      URL.revokeObjectURL(url)
+    }
+  },
   { label: 'عرض  العملاء', icon: '👥', onClick: () => (window.location.href = '/customers/list') },
 ];
 

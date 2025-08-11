@@ -169,7 +169,6 @@ export default function CashboxPage() {
     >
       <div className="max-w-sm mx-auto w-full p-3 space-y-3" dir="rtl">
         <div className="bg-white rounded-xl shadow-sm border p-3">
-          <div className="text-base font-semibold text-gray-900 mb-2">الصندوق</div>
 
           {/* 1 - نوع العملية */}
           <div className="mb-2">
