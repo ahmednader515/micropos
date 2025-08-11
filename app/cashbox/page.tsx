@@ -29,7 +29,7 @@ export default function CashboxPage() {
     description: '',
     date: '' as string,
   })
-  const [includeSalesCustomers, setIncludeSalesCustomers] = useState(true)
+  const [includeSalesCustomers, setIncludeSalesCustomers] = useState(false)
   const [deductPurchasesSuppliers, setDeductPurchasesSuppliers] = useState(false)
   const [deductExpenses, setDeductExpenses] = useState(false)
   const [notification, setNotification] = useState<{
@@ -242,7 +242,7 @@ export default function CashboxPage() {
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className={`flex-1 px-3 py-2 rounded-lg text-white ${transactionType === 'INCOME' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'} disabled:opacity-50`}
+              className={`flex-1 px-3 py-2 rounded-lg text-white ${transactionType === 'INCOME' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-blue-600 hover:bg-blue-700'} disabled:opacity-50`}
             >
               {submitting ? 'جارٍ الحفظ...' : 'حفظ العملية'}
             </button>
