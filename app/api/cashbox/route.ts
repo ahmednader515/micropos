@@ -64,7 +64,8 @@ export async function GET() {
 
 // POST /api/cashbox - Add new transaction
 export async function POST(request: NextRequest) {
-  if (isBuildTime() || isVercelBuild()) {
+  // Only block during actual build time, not in deployed environment
+  if (isBuildTime()) {
     return NextResponse.json(
       { error: 'Service unavailable during build/deploy' },
       { status: 503 }

@@ -77,12 +77,7 @@ export default function ExpensesPage() {
       menuOptions={[]}
     >
       <div className="space-y-6" dir="rtl">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">إضافة مصروف</h1>
-          <p className="mt-2 text-gray-600">هذه الصفحة مخصصة لإضافة المصروفات فقط</p>
-        </div>
-
-        <div className="bg-white rounded-xl p-4 shadow-sm border max-w-sm">
+        <div className="bg-white rounded-xl p-4 shadow-sm border max-w-sm mx-auto">
           <form onSubmit={handleSubmit} className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">لحساب</label>
