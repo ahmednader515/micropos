@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { safeDatabaseOperation, isBuildTime, isVercelBuild } from '@/lib/api-helpers'
+import { isBuildTime } from '@/lib/api-helpers'
 
 // Force dynamic rendering - disable static generation
 export const dynamic = 'force-dynamic'
@@ -22,41 +22,42 @@ const fallbackCashbox = {
 
 // GET /api/cashbox - Get cashbox balance and transactions
 export async function GET() {
-  // Immediate fallback for Vercel build environments
-  if (isVercelBuild()) {
+  // During build or without DB, return safe fallback
+  if (isBuildTime() || !process.env.DATABASE_URL) {
     return NextResponse.json(fallbackCashbox)
   }
 
-  return safeDatabaseOperation(
-    async () => {
-      const transactions = await prisma.cashboxTransaction.findMany({
-        orderBy: { createdAt: 'desc' },
-        take: 100 // Limit to last 100 transactions
-      })
+  try {
+    const transactions = await prisma.cashboxTransaction.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 100
+    })
 
-      const balance = transactions.reduce((acc, transaction) => {
-        if (transaction.type === 'INCOME') {
-          return acc + Number(transaction.amount)
-        }
-        return acc - Number(transaction.amount)
-      }, 0)
+    const balance = transactions.reduce((acc, transaction) => {
+      return transaction.type === 'INCOME'
+        ? acc + Number(transaction.amount)
+        : acc - Number(transaction.amount)
+    }, 0)
 
-      return {
-        balance: balance.toFixed(2),
-        transactions: transactions.map(t => ({
-          id: t.id,
-          type: t.type,
-          amount: t.amount.toString(),
-          description: t.description ?? '',
-          reference: t.reference ?? '',
-          paymentMethod: t.paymentMethod,
-          createdAt: t.createdAt.toISOString()
-        }))
-      }
-    },
-    fallbackCashbox,
-    'Failed to fetch cashbox data'
-  )
+    return NextResponse.json({
+      balance: balance.toFixed(2),
+      transactions: transactions.map(t => ({
+        id: t.id,
+        type: t.type,
+        amount: t.amount.toString(),
+        description: t.description ?? '',
+        reference: t.reference ?? '',
+        paymentMethod: t.paymentMethod,
+        createdAt: t.createdAt.toISOString()
+      }))
+    })
+  } catch (error) {
+    console.error('Error fetching cashbox data:', error)
+    return NextResponse.json(
+      { error: 'فشل في جلب بيانات الصندوق' },
+      { status: 500 }
+    )
+  }
 }
 
 // POST /api/cashbox - Add new transaction
@@ -100,10 +101,9 @@ export async function POST(request: NextRequest) {
     if (type === 'EXPENSE') {
       const currentTransactions = await prisma.cashboxTransaction.findMany()
       const currentBalance = currentTransactions.reduce((acc, transaction) => {
-        if (transaction.type === 'INCOME') {
-          return acc + Number(transaction.amount)
-        }
-        return acc - Number(transaction.amount)
+        return transaction.type === 'INCOME'
+          ? acc + Number(transaction.amount)
+          : acc - Number(transaction.amount)
       }, 0)
 
       if (currentBalance - amountNum < 0) {
